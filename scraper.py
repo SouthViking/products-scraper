@@ -1,3 +1,5 @@
+import os
+import json
 import time
 from typing import List, TypedDict
 
@@ -22,6 +24,8 @@ class ProductsScraper:
         for scraping_def in self.config['scraping_defs']:
             print(f'Executing scraping for site: "{scraping_def["site_name"]}".')
 
+            total_results = { 'products': [] }
+
             self.driver.get(scraping_def['entrypoint']['url'])
 
             search_element = scraping_def['entrypoint']['get_search_element'](self.driver)
@@ -33,7 +37,8 @@ class ProductsScraper:
             search_element.send_keys(query)
             search_element.send_keys(Keys.RETURN)
 
-            next_url = scraping_def['scraping_execution_callback'](self.driver, query)
+            next_url, results = scraping_def['scraping_execution_callback'](self.driver, query)
+            total_results['products'].extend(results)
 
             while next_url is not None:
                 print(f'Got a new URL after scraping process for site: "{scraping_def["site_name"]}".')
@@ -42,16 +47,35 @@ class ProductsScraper:
                 
                 self.driver.get(next_url)
                 
-                next_url = scraping_def['scraping_execution_callback'](self.driver, query)
+                next_url, results = scraping_def['scraping_execution_callback'](self.driver, query)
+                total_results['products'].extend(results)
 
-            if next_url is not None:
-                print(f'Got a new URL after scraping process for site: "{scraping_def["site_name"]}".')
+            storage_filename = scraping_def['get_storage_filename'](query)
+
+            self.store_results(storage_filename, total_results)
 
             time.sleep(0.5)
 
         self.driver.close()
 
+    def store_results(self, filename: str, data: dict):
+        try:
+            if filename is None or len(filename) == 0:
+                print('Cannot save results. Filename is not valid.')
+                return
+
+            storage_folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+            if not os.path.exists(storage_folder_path):
+                os.mkdir(storage_folder_path)
+            
+            target_file_path = os.path.join(storage_folder_path, f'{filename}.json')
+
+            with open(target_file_path, 'w', encoding = 'utf-8') as storage_file:
+                json.dump(data, storage_file, indent = 4, ensure_ascii = False)    
+        
+        except Exception as error:
+            print(f'There was a problem after trying to store results. Error: {error}')
 
 if __name__ == '__main__':
     scraper = ProductsScraper({ 'scraping_defs': scraping_definitions })
-    scraper.execute_search('MSI Geforce RTX')
+    scraper.execute_search('Iphone 14 Pro Max')

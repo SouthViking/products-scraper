@@ -1,4 +1,4 @@
-from typing import Callable, Union, TypedDict
+from typing import Callable, List, Union, Tuple, TypedDict
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
@@ -13,5 +13,7 @@ class SiteScrapingDefinition(TypedDict):
     # The definition of the url and search element of the site to execute the query.
     entrypoint: SiteEntryPointDefinition
     # Callback to perform the scraping and that will run after running the query in the website.
-    # It returns either None or the link to the next page to be visited (for sites using pagination)
-    scraping_execution_callback: Callable[[WebDriver, str], Union[str, None]]
+    # It returns a tuple containing the next page link (in case there is one) and the list of obtained results.
+    scraping_execution_callback: Callable[[WebDriver, str], Tuple[Union[str, None], List[dict]]]
+    # Callback to resolve the name of the file where the results will be executed. Takes the initial query as input.
+    get_storage_filename: Callable[[str], str]
