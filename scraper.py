@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import argparse
 from typing import List, TypedDict
 
 from selenium import webdriver
@@ -77,5 +78,10 @@ class ProductsScraper:
             print(f'There was a problem after trying to store results. Error: {error}')
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description = 'Web scraping for website products.')
+    parser.add_argument('product', metavar ='p', type = str, help = 'The product to search')
+
+    args = parser.parse_args().__dict__
+
     scraper = ProductsScraper({ 'scraping_defs': scraping_definitions })
-    scraper.execute_search('Iphone 14 Pro Max')
+    scraper.execute_search(args['product'])
