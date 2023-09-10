@@ -1,1 +1,1 @@
-from .plans import *
+from .scraping_defs import *
